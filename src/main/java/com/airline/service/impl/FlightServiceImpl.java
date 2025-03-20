@@ -7,6 +7,7 @@ import com.airline.service.FlightService;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class FlightServiceImpl implements FlightService {
@@ -19,19 +20,49 @@ public class FlightServiceImpl implements FlightService {
 
     @Override
     public List<FlightDTO> getAllFlights(String sort) {
-        // Implementation here
-        return List.of();
+        List<Flight> flights = flightRepository.findAll();
+
+        if ("desc".equalsIgnoreCase(sort)) {
+            flights.sort((f1, f2) -> f2.getDepartureTime().compareTo(f1.getDepartureTime()));
+        } else {
+            flights.sort((f1, f2) -> f1.getDepartureTime().compareTo(f2.getDepartureTime()));
+        }
+
+        return flights.stream()
+                .map(flight -> new FlightDTO(
+                        flight.getId(),
+                        flight.getFlightNumber(),
+                        flight.getOrigin(),
+                        flight.getDestination(),
+                        flight.getDepartureTime().toString(),
+                        flight.getArrivalTime().toString(),
+                        flight.getStatus().name()
+                ))
+                .collect(Collectors.toList());
     }
 
     @Override
     public FlightDTO getFlightById(Long id) {
-        // Implementation here
-        return null;
+        Flight flight = flightRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Flight not found"));
+        return new FlightDTO(
+                flight.getId(),
+                flight.getFlightNumber(),
+                flight.getOrigin(),
+                flight.getDestination(),
+                flight.getDepartureTime().toString(),
+                flight.getArrivalTime().toString(),
+                flight.getStatus().name()
+        );
     }
 
     @Override
     public List<String> getFlightSchedule(Long id, List<String> dates) {
-        // Implementation here
-        return List.of();
+        Flight flight = flightRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Flight not found"));
+
+        return dates.stream()
+                .map(date -> "Flight " + flight.getFlightNumber() + " scheduled for " + date)
+                .collect(Collectors.toList());
     }
 }
